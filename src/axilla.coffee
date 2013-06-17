@@ -50,7 +50,7 @@ axilla.clearCache = ->
 cacheTemplate = (paths, options, cb) ->
   [absolute, relative] = paths
 
-  fs.readFile absolute, 'utf8', (err, contents) ->
+  readFile absolute, (err, contents) ->
     return cb err if err?
 
     base = stripPath relative
@@ -66,8 +66,8 @@ cacheFunction = (path, template) ->
   templates[path] = (viewObject) ->
     Mustache.render template, viewObject, partials
 
-cachePartial = (path, blah) ->
-  partials[path] = blah
+cachePartial = (path, template) ->
+  partials[path] = template
 
 removeBaseDir = (baseDir, path) ->
   (path.split (new RegExp "^#{baseDir}/"))[1]
@@ -86,8 +86,12 @@ isPartial = (filename) ->
 isAbsolutePath = (path) ->
   (path.match (new RegExp "^#{Path.sep}"))?
 
-readFileSync = (filename, options={}) ->
-  fs.readFileSync filename, (utils.defaults options, {encoding: 'utf8'})
+readFile = (path, cb) ->
+  fs.readFile path, 'utf8', cb
+
+readFileSync = (path, options={}) ->
+  fs.readFileSync path, (utils.defaults options, {encoding: 'utf8'})
+
 
 #############
 # Utilities #
@@ -114,15 +118,15 @@ utils = do ->
 
   isArray: Array.isArray
 
-  isObject: (object) ->
-    object is (Object object)
+  isObject: (obj) ->
+    obj is (Object obj)
 
-  isString: (object) ->
-    (toString.call object) is '[object String]'
+  isString: (obj) ->
+    (toString.call obj) is '[object String]'
 
-  isEmpty: (object) ->
-    return true unless object?
-    if (utils.isArray object) or (utils.isString object)
-      return object.length is 0
-    return false for own key of object
+  isEmpty: (obj) ->
+    return true unless obj?
+    if (utils.isArray obj) or (utils.isString obj)
+      return obj.length is 0
+    return false for own key of obj
     true
