@@ -63,11 +63,12 @@ axilla.clearCache = ->
 cacheTemplate = (paths, options, cb) ->
   [relative, absolute] = paths
 
+  render = do ->
+    return (readAndCompileSync absolute) unless options.cache is off
+    (viewObject) -> (readAndCompileSync absolute)(viewObject)
+
   templateCache = if options.isPartial then partials else templates
-  templateCache[relative] =
-    render: do ->
-      return (readAndCompileSync absolute) unless options.cache is off
-      (viewObject) -> (readAndCompileSync absolute)(viewObject)
+  templateCache[relative] = {render}
 
   cb null
 
