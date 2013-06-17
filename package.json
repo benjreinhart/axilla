@@ -1,7 +1,7 @@
 {
     "name": "axilla"
   , "version": "0.0.0-dev"
-  , "description": "Simple Node.js view templating using hogan.js."
+  , "description": "Simple Node.js view templating with Handlebars."
   , "author": "benjreinhart"
   , "engines":
     {
@@ -12,6 +12,7 @@
     [
         "templating"
       , "mustache"
+      , "handlebars"
       , "views"
       , "rendering"
       , "markup"
