@@ -9,7 +9,7 @@ module.exports = axilla = (basePath, defaults) ->
 
   (path, viewObject, options) ->
     unless utils.isEmpty basePath
-      path = Path.normalize "#{basePath}#{path.sep}#{path}"
+      path = Path.normalize "#{basePath}#{Path.sep}#{path}"
 
     render path, viewObject, (utils.defaults options, defaults)
 
@@ -17,16 +17,19 @@ axilla.templates = templates = {}
 axilla.partials = partials = {}
 
 Handlebars.registerHelper 'partial', (path) ->
-  unless (partial = partials[path])?
-    throw new Error "Unable to resolve partial at #{path}"
+  renderPartial path, this
 
-  partial.render this
-
-axilla.render = render = (path, viewObject, options={}) ->
+axilla.render = render = (path, viewObject) ->
   unless (template = templates[path])?
     throw new Error "Unable to resolve template at #{path}"
 
   template.render viewObject
+
+axilla.renderPartial = renderPartial = (path, viewObject) ->
+  unless (partial = partials[path])?
+    throw new Error "Unable to resolve partial at #{path}"
+
+  partial.render viewObject
 
 axilla.cache = (options, cb) ->
   baseDir = if (utils.isString options) then options else options.baseDir
