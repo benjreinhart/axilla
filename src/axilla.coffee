@@ -17,7 +17,6 @@ axilla.templates = templates = {}
 axilla.partials = partials = {}
 
 Handlebars.registerHelper 'partial', (path) ->
-
   unless (partial = partials[path])?
     throw new Error "Unable to resolve partial at #{path}"
 
