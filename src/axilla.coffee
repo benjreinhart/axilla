@@ -4,6 +4,9 @@ glob = require 'glob'
 async = require 'async'
 Handlebars = require 'handlebars'
 
+templates = {}
+partials = {}
+
 module.exports = axilla = (basePath, defaults) ->
   if (utils.isObject basePath) then defaults = basePath; basePath = null
 
@@ -12,9 +15,6 @@ module.exports = axilla = (basePath, defaults) ->
       path = Path.normalize "#{basePath}#{Path.sep}#{path}"
 
     render path, viewObject, (utils.defaults options, defaults)
-
-axilla.templates = templates = {}
-axilla.partials = partials = {}
 
 Handlebars.registerHelper 'partial', (path) ->
   renderPartial path, this
@@ -56,20 +56,17 @@ axilla.configure = (options, cb) ->
   null
 
 axilla.clearCache = ->
-  axilla.templates = templates = {}
-  axilla.partials = partials = {}
+  templates = {}
+  partials = {}
 
 cacheTemplate = (paths, options, cb) ->
   [relative, absolute] = paths
 
   templateCache = if options.isPartial then partials else templates
   templateCache[relative] =
-    render: do (shouldReload = (options.cache is off)) ->
-      if shouldReload
-        (viewObject) -> (readAndCompileSync absolute)(viewObject)
-      else
-        template = readAndCompileSync absolute
-        (viewObject) -> template viewObject
+    render: do ->
+      return (readAndCompileSync absolute) unless options.cache is off
+      (viewObject) -> (readAndCompileSync absolute)(viewObject)
 
   cb null
 
