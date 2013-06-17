@@ -31,15 +31,23 @@ axilla.renderPartial = renderPartial = (path, viewObject) ->
 
   partial.render viewObject
 
-axilla.cache = (options, cb) ->
-  baseDir = if (utils.isString options) then options else options.baseDir
+axilla.configure = (options, cb) ->
+  if utils.isString options
+    baseDir = options
+    options = {}
+  else
+    {baseDir} = options
 
   unless isAbsolutePath baseDir
-    baseDir = Path.normalize "#{__dirname}#{Path.sep}#{baseDir}"
+    throw new Error "Path to baseDir is not an absolute path"
 
   glob (Path.normalize "#{baseDir}/**/*.mustache"), (err, paths) ->
-    iterator = (path, cb) ->
-      cacheContents [path, (removeBaseDir baseDir, path)], options, cb
+    iterator = (absolutePath, cb) ->
+      relativePath = removeBaseDir baseDir, absolutePath
+      base = stripPath relativePath
+
+      options.isPartial = isPartial (Path.basename relativePath)
+      cacheTemplate [base, absolutePath], options, cb
 
     async.each paths, iterator, (err) ->
       return cb err if cb?
@@ -51,40 +59,26 @@ axilla.clearCache = ->
   axilla.templates = templates = {}
   axilla.partials = partials = {}
 
-compileFromDiskAndRender = (absolutePath, viewObject) ->
+cacheTemplate = (paths, options, cb) ->
+  [relative, absolute] = paths
+
+  templateCache = if options.isPartial then partials else templates
+  templateCache[relative] =
+    render: do (shouldReload = (options.cache is off)) ->
+      if shouldReload
+        (viewObject) -> (readAndCompileSync absolute)(viewObject)
+      else
+        template = readAndCompileSync absolute
+        (viewObject) -> template viewObject
+
+  cb null
+
+readAndCompileSync = (absolutePath) ->
   template = readFileSync absolutePath
-  (Handlebars.compile template)(viewObject)
-
-cacheContents = (paths, options, cb) ->
-  [absolute, relative] = paths
-
-  readFile absolute, (err, contents) ->
-    return cb err if err?
-
-    base = stripPath relative
-
-    options = [[base, absolute], contents, options]
-    fn = if isPartial (Path.basename relative) then cachePartial else cacheTemplate
-    fn options...
-
-    cb()
-
-cacheTemplate = (paths, template, options) ->
-  [relative, absolute] = paths
-  templates[relative] =
-    render: (buildRenderFunction absolute, template, options)
-
-cachePartial = (paths, partial, options) ->
-  [relative, absolute] = paths
-  partials[relative] =
-    render: (buildRenderFunction absolute, partial, options)
-
-buildRenderFunction = (absolutePath, template, options) ->
-  return (Handlebars.compile template) unless options.reload is on
-  utils.partiallyApply compileFromDiskAndRender, absolutePath
+  Handlebars.compile template
 
 removeBaseDir = (baseDir, path) ->
-  (path.split (new RegExp "^#{baseDir}/"))[1]
+  (path.split (new RegExp "^#{baseDir}#{Path.sep}"))[1]
 
 stripPath = (path) ->
   filename = Path.basename path
@@ -99,9 +93,6 @@ isPartial = (filename) ->
 
 isAbsolutePath = (path) ->
   (path.match (new RegExp "^#{Path.sep}"))?
-
-readFile = (path, cb) ->
-  fs.readFile path, 'utf8', cb
 
 readFileSync = (path, options={}) ->
   fs.readFileSync path, (utils.defaults options, {encoding: 'utf8'})
