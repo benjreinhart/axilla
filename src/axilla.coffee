@@ -16,6 +16,7 @@ module.exports = axilla = (basePath, defaults) ->
 
     render path, viewObject, (utils.defaults options, defaults)
 
+axilla.Handlebars = Handlebars
 Handlebars.registerHelper 'partial', (path) ->
   renderPartial path, this
 
