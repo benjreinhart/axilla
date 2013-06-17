@@ -1,0 +1,49 @@
+{
+    "name": "axilla"
+  , "version": "0.0.0-dev"
+  , "description": "Simple Node.js view templating with mustache."
+  , "author": "benjreinhart"
+  , "engines":
+    {
+      "node": ">=0.8"
+    }
+
+  , "keywords":
+    [
+        "templating"
+      , "mustache"
+      , "views"
+      , "rendering"
+      , "markup"
+      , "node"
+    ]
+
+  , "dependencies":
+    {
+        "async": "~0.2.9"
+      , "glob": "~3.2.1"
+      , "mustache": "~0.7.2"
+    }
+
+  , "devDependencies":
+    {
+        "chai"                : ">=1.5.0"
+      , "mocha"               : ">=1.8.2"
+      , "coffee-script-redux" : "2.0.0-beta5"
+    }
+
+  , "repository":
+    {
+        "type" : "git"
+      , "url"  : "git@github.com:benjreinhart/axilla.git"
+    }
+
+  , "bugs":
+    {
+        "url": "https://github.com/benjreinhart/axilla/issues"
+    }
+
+
+  , "license": "MIT"
+  , "main": "lib/axilla.js"
+}
