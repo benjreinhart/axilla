@@ -1,7 +1,7 @@
 {
     "name": "axilla"
   , "version": "0.0.0-dev"
-  , "description": "Simple Node.js view templating with mustache."
+  , "description": "Simple Node.js view templating using hogan.js."
   , "author": "benjreinhart"
   , "engines":
     {
@@ -22,7 +22,7 @@
     {
         "async": "~0.2.9"
       , "glob": "~3.2.1"
-      , "mustache": "~0.7.2"
+      , "handlebars": ">=1.0.12"
     }
 
   , "devDependencies":

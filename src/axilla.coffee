@@ -2,7 +2,7 @@ fs = require 'fs'
 Path = require 'path'
 glob = require 'glob'
 async = require 'async'
-Mustache = require 'mustache'
+Handlebars = require 'handlebars'
 
 module.exports = axilla = (basePath, defaults) ->
   if (utils.isObject basePath) then defaults = basePath; basePath = null
@@ -16,15 +16,18 @@ module.exports = axilla = (basePath, defaults) ->
 axilla.templates = templates = {}
 axilla.partials = partials = {}
 
+Handlebars.registerHelper 'partial', (path) ->
+
+  unless (partial = partials[path])?
+    throw new Error "Unable to resolve partial at #{path}"
+
+  partial.render this
+
 axilla.render = render = (path, viewObject, options={}) ->
-  if templates[path]?
-    return templates[path] viewObject
+  unless (template = templates[path])?
+    throw new Error "Unable to resolve template at #{path}"
 
-  unless (fs.existsSync path) and (fs.statSync path).isFile()
-    throw new Error "Unable to resolve file at #{path}"
-
-  template = readFileSync path
-  Mustache.render template, viewObject
+  template.render viewObject
 
 axilla.cache = (options, cb) ->
   baseDir = if (utils.isString options) then options else options.baseDir
@@ -33,9 +36,8 @@ axilla.cache = (options, cb) ->
     baseDir = Path.normalize "#{__dirname}#{Path.sep}#{baseDir}"
 
   glob (Path.normalize "#{baseDir}/**/*.mustache"), (err, paths) ->
-    console.log (Path.normalize "#{baseDir}/**/*.mustache"), paths
     iterator = (path, cb) ->
-      cacheTemplate [path, (removeBaseDir baseDir, path)], options, cb
+      cacheContents [path, (removeBaseDir baseDir, path)], options, cb
 
     async.each paths, iterator, (err) ->
       return cb err if cb?
@@ -47,7 +49,11 @@ axilla.clearCache = ->
   axilla.templates = templates = {}
   axilla.partials = partials = {}
 
-cacheTemplate = (paths, options, cb) ->
+compileFromDiskAndRender = (absolutePath, viewObject) ->
+  template = readFileSync absolutePath
+  (Handlebars.compile template)(viewObject)
+
+cacheContents = (paths, options, cb) ->
   [absolute, relative] = paths
 
   readFile absolute, (err, contents) ->
@@ -55,19 +61,25 @@ cacheTemplate = (paths, options, cb) ->
 
     base = stripPath relative
 
-    if isPartial (Path.basename relative)
-      cachePartial base, contents
-    else
-      cacheFunction base, contents
+    options = [[base, absolute], contents, options]
+    fn = if isPartial (Path.basename relative) then cachePartial else cacheTemplate
+    fn options...
 
     cb()
 
-cacheFunction = (path, template) ->
-  templates[path] = (viewObject) ->
-    Mustache.render template, viewObject, partials
+cacheTemplate = (paths, template, options) ->
+  [relative, absolute] = paths
+  templates[relative] =
+    render: (buildRenderFunction absolute, template, options)
 
-cachePartial = (path, template) ->
-  partials[path] = template
+cachePartial = (paths, partial, options) ->
+  [relative, absolute] = paths
+  partials[relative] =
+    render: (buildRenderFunction absolute, partial, options)
+
+buildRenderFunction = (absolutePath, template, options) ->
+  return (Handlebars.compile template) unless options.reload is on
+  utils.partiallyApply compileFromDiskAndRender, absolutePath
 
 removeBaseDir = (baseDir, path) ->
   (path.split (new RegExp "^#{baseDir}/"))[1]
@@ -100,6 +112,9 @@ readFileSync = (path, options={}) ->
 utils = do ->
   {slice} = Array.prototype
   {toString} = Object.prototype
+
+  partiallyApply: (fn, args...) ->
+    fn.bind null, args...
 
   extend: (obj) ->
     (slice.call arguments, 1).forEach (source) ->
