@@ -106,16 +106,6 @@ utils = do ->
   {slice} = Array.prototype
   {toString} = Object.prototype
 
-  partiallyApply: (fn, args...) ->
-    fn.bind null, args...
-
-  extend: (obj) ->
-    (slice.call arguments, 1).forEach (source) ->
-      for own key of source
-        obj[key] = source[key]
-      undefined
-    obj
-
   defaults: (obj) ->
     (slice.call arguments, 1).forEach (source) ->
       for own key of source
