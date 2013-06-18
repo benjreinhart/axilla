@@ -19,9 +19,6 @@ module.exports = axilla = (basePath, defaults) ->
 axilla.handlebars = -> Handlebars
 axilla.templates = -> {templates, partials}
 
-Handlebars.registerHelper 'partial', (path) ->
-  renderPartial path, this
-
 axilla.render = render = (path, viewObject) ->
   unless (template = templates[path])?
     throw new Error "Unable to resolve template at #{path}"
@@ -109,7 +106,6 @@ isAbsolutePath = (path) ->
 readFileSync = (path, options={}) ->
   fs.readFileSync path, (utils.defaults options, {encoding: 'utf8'})
 
-
 #############
 # Utilities #
 #############
@@ -150,3 +146,11 @@ utils = do ->
       return obj.length is 0
     return false for own key of obj
     true
+
+
+######################
+# Handlebars Helpers #
+######################
+
+Handlebars.registerHelper 'partial', (path) ->
+  new Handlebars.SafeString (renderPartial path, this)
