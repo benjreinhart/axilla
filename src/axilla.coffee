@@ -16,7 +16,9 @@ module.exports = axilla = (basePath, defaults) ->
 
     render path, viewObject, (utils.defaults options, defaults)
 
-axilla.Handlebars = Handlebars
+axilla.handlebars = -> Handlebars
+axilla.templates = -> {templates, partials}
+
 Handlebars.registerHelper 'partial', (path) ->
   renderPartial path, this
 
@@ -33,26 +35,21 @@ axilla.renderPartial = renderPartial = (path, viewObject) ->
   partial.render viewObject
 
 axilla.configure = (options, cb) ->
-  if utils.isString options
+  if utils.isObject options
+    {baseDir} = options
+  else
     baseDir = options
     options = {}
-  else
-    {baseDir} = options
+
+  unless 'function' is typeof cb
+    cb = (err) -> throw err if err?
 
   unless isAbsolutePath baseDir
-    throw new Error "Path to baseDir is not an absolute path"
+    throw new Error '`baseDir` must be an absolute path'
 
   glob (Path.normalize "#{baseDir}/**/*.mustache"), (err, paths) ->
-    iterator = (absolutePath, cb) ->
-      relativePath = removeBaseDir baseDir, absolutePath
-      base = stripPath relativePath
-
-      options.isPartial = isPartial (Path.basename relativePath)
-      cacheTemplate [base, absolutePath], options, cb
-
-    async.each paths, iterator, (err) ->
-      return cb err if cb?
-      throw err if err?
+    return cb err if err?
+    async.each paths, (cacheTemplates baseDir, options), cb
 
   null
 
@@ -60,15 +57,27 @@ axilla.clearCache = ->
   templates = {}
   partials = {}
 
+cacheTemplates = (baseDir, options) ->
+  (absolutePath, cb) ->
+    relativePath = removeBaseDir baseDir, absolutePath
+    relativePath = removeExtensions relativePath
+
+    opts = utils.clone options
+
+    if isPartial (Path.basename relativePath)
+      utils.extend opts, options, isPartial: true
+      relativePath = removeUnderscore relativePath
+
+    cacheTemplate [relativePath, absolutePath], opts, cb
+
 cacheTemplate = (paths, options, cb) ->
   [relative, absolute] = paths
 
-  render = do ->
-    return (readAndCompileSync absolute) unless options.cache is off
-    (viewObject) -> (readAndCompileSync absolute)(viewObject)
-
   templateCache = if options.isPartial then partials else templates
-  templateCache[relative] = {render}
+  templateCache[relative] =
+    render: do ->
+      return (readAndCompileSync absolute) unless options.cache is off
+      (viewObject) -> (readAndCompileSync absolute)(viewObject)
 
   cb null
 
@@ -79,11 +88,15 @@ readAndCompileSync = (absolutePath) ->
 removeBaseDir = (baseDir, path) ->
   (path.split (new RegExp "^#{baseDir}#{Path.sep}"))[1]
 
-stripPath = (path) ->
+removeExtensions = (path) ->
   filename = Path.basename path
-
   base = (filename.split '.')[0]
-  base = (base.split /^_/)[1] if isPartial base
+
+  "#{(path.split filename)[0]}#{base}"
+
+removeUnderscore = (path) ->
+  filename = Path.basename path
+  base = (filename.split /^_/)[1]
 
   "#{(path.split filename)[0]}#{base}"
 
@@ -105,6 +118,13 @@ utils = do ->
   {slice} = Array.prototype
   {toString} = Object.prototype
 
+  extend: (obj) ->
+    (slice.call arguments, 1).forEach (source) ->
+      for own key of source
+        obj[key] = source[key]
+      undefined
+    obj
+
   defaults: (obj) ->
     (slice.call arguments, 1).forEach (source) ->
       for own key of source
@@ -112,6 +132,9 @@ utils = do ->
           obj[key] = source[key]
       undefined
     obj
+
+  clone: (obj) ->
+    utils.extend {}, obj
 
   isArray: Array.isArray
 
