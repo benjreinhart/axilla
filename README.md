@@ -2,16 +2,16 @@
 
 Simple Node.js view templating using [handlebars](http://handlebarsjs.com/).
 
+Features
+  * Synchronous interface
+  * Intuitive API
+  * Template Caching
+
 Install with `npm install axilla`
 
 ```javascript
 var axilla = require('axilla');
 ```
-
-Features
-  * Synchronous interface
-  * Intuitive API
-  * Template Caching
 
 ### Example
 
