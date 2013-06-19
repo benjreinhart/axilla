@@ -55,10 +55,10 @@ axilla.configure(secondBaseDir, function(err){
 This will find all templates ending in `.mustache` at any depth in `/Users/ben/projects/example/public` and `/Users/ben/projects/example/components`. Axilla will store files that are prefixed with an underscore as partials for use within other views. Inside of the mustache template, they can be referenced with the `partial` helper:
 
 ```html
-{{partial "users/form"}}
+<div class="new-user-form">{{partial "users/form"}}</div>
 ```
 
-When referencing a partial filename in a view does not include the underscore.
+When referencing a partial inside the views, the filename does not include the prefixed underscore.
 
 To render a template, call `axilla.render` passing the path and filename (minus the extensions) relative to the directory supplied to `axilla.configure`, i.e.
 
@@ -67,6 +67,16 @@ var indexHtml = axilla.render('users/index', {users: []});
 var showHtml = axilla.render('todos/show', {todo: {}});
 var oneOffHtml = axilla.render('templates/one_off_template', {});
 ```
+
+We can shorten this by invoking `axilla` with defaults.
+
+```javascript
+var render = axilla('users');
+var html = render('index', {users: []});
+```
+
+This will render the users index page.
+
 
 ## API
 
