@@ -52,7 +52,7 @@ axilla.configure(secondBaseDir, function(err){
 });
 ```
 
-This will find all templates ending in `.mustache` at any depth in `/Users/ben/projects/example/components` and `/Users/ben/projects/example/components`. Axilla will store files that are prefixed with an underscore as partials for use within other views. Inside of the mustache template, they can be referenced with the `partial` helper:
+This will find all templates ending in `.mustache` at any depth in `/Users/ben/projects/example/public` and `/Users/ben/projects/example/components`. Axilla will store files that are prefixed with an underscore as partials for use within other views. Inside of the mustache template, they can be referenced with the `partial` helper:
 
 ```html
 {{partial "users/form"}}
