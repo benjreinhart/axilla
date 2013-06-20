@@ -1,7 +1,6 @@
 fs = require 'fs'
 Path = require 'path'
 glob = require 'glob'
-async = require 'async'
 Handlebars = require 'handlebars'
 
 templates = {}
@@ -16,8 +15,22 @@ module.exports = axilla = (basePath, defaults) ->
 
     render path, viewObject, (utils.defaults options, defaults)
 
-axilla.handlebars = -> Handlebars
-axilla.templates = -> {templates, partials}
+axilla.configure = (path, options={}) ->
+  unless isAbsolutePath path
+    throw new Error 'First argument must be an absolute path'
+
+  unless fs.existsSync path
+    throw new Error '#{path} does not exist'
+
+  (glob.sync (Path.normalize "#{path}/**/*.mustache")).forEach (file) ->
+    relativePath = getTemplateReference file, path
+
+    opts = utils.clone options
+    if isPartial (Path.basename file)
+      opts.isPartial = true
+      relativePath = removeUnderscore relativePath
+
+    cacheTemplate file, (utils.extend opts, as: relativePath)
 
 axilla.render = render = (path, viewObject) ->
   unless (template = templates[path])?
@@ -25,65 +38,41 @@ axilla.render = render = (path, viewObject) ->
 
   template.render viewObject
 
-axilla.renderPartial = renderPartial = (path, viewObject) ->
+axilla.clearCache = ->
+  templates = {}
+  partials = {}
+
+axilla.handlebars = -> Handlebars
+axilla.templates = -> {templates, partials}
+
+
+###########
+# PRIVATE #
+###########
+
+renderPartial = (path, viewObject) ->
   unless (partial = partials[path])?
     throw new Error "Unable to resolve partial at #{path}"
 
   partial.render viewObject
 
-axilla.configure = (options, cb) ->
-  if utils.isObject options
-    {baseDir} = options
-  else
-    baseDir = options
-    options = {}
+getTemplateReference = (file, dirname) ->
+  removeBasePath dirname, (removeExtensions file)
 
-  unless 'function' is typeof cb
-    cb = (err) -> throw err if err?
-
-  unless isAbsolutePath baseDir
-    throw new Error '`baseDir` must be an absolute path'
-
-  glob (Path.normalize "#{baseDir}/**/*.mustache"), (err, paths) ->
-    return cb err if err?
-    async.each paths, (cacheTemplates baseDir, options), cb
-
-  null
-
-axilla.clearCache = ->
-  templates = {}
-  partials = {}
-
-cacheTemplates = (baseDir, options) ->
-  (absolutePath, cb) ->
-    relativePath = removeBaseDir baseDir, absolutePath
-    relativePath = removeExtensions relativePath
-
-    opts = utils.clone options
-
-    if isPartial (Path.basename relativePath)
-      utils.extend opts, options, isPartial: true
-      relativePath = removeUnderscore relativePath
-
-    cacheTemplate [relativePath, absolutePath], opts, cb
-
-cacheTemplate = (paths, options, cb) ->
-  [relative, absolute] = paths
-
+cacheTemplate = (path, options) ->
   templateCache = if options.isPartial then partials else templates
-  templateCache[relative] =
+  templateCache[options.as] =
     render: do ->
-      return (readAndCompileSync absolute) unless options.cache is off
-      (viewObject) -> (readAndCompileSync absolute)(viewObject)
-
-  cb null
+      return (readAndCompileSync path) unless options.cache is off
+      (viewObject) -> (readAndCompileSync path)(viewObject)
+  undefined
 
 readAndCompileSync = (absolutePath) ->
   template = readFileSync absolutePath
   Handlebars.compile template
 
-removeBaseDir = (baseDir, path) ->
-  (path.split (new RegExp "^#{baseDir}#{Path.sep}"))[1]
+removeBasePath = (dirname, path) ->
+  (path.split (new RegExp "^#{dirname}#{Path.sep}"))[1]
 
 removeExtensions = (path) ->
   filename = Path.basename path
@@ -105,6 +94,7 @@ isAbsolutePath = (path) ->
 
 readFileSync = (path, options={}) ->
   fs.readFileSync path, (utils.defaults options, {encoding: 'utf8'})
+
 
 #############
 # Utilities #

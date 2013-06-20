@@ -3,9 +3,8 @@
 Simple Node.js view templating using [handlebars](http://handlebarsjs.com/).
 
 Features
-  * Synchronous interface
-  * Intuitive API
-  * Template Caching
+  * Synchronous interface with template caching
+  * Flexible API
 
 Install with `npm install axilla`
 
@@ -37,19 +36,15 @@ Give the following directory structure
 Axilla first needs to be configured with the location of any/all templates.
 ```javascript
 var baseDir = "/Users/ben/projects/example/components";
-axilla.configure(baseDir, function(err){
-  // handle error if err == null
-  // has now stored a reference to all files ending in .mustache in /components
-});
+axilla.configure(baseDir)
+// has now stored a reference to all files ending in .mustache in /components
 ```
 
 Axilla can be configured multiple times with different locations of templates.
 ```javascript
 var secondBaseDir = "/Users/ben/projects/example/public";
-axilla.configure(secondBaseDir, function(err){
-  // handle error if err == null
-  // has now stored a reference to all files ending in .mustache in /public
-});
+axilla.configure(secondBaseDir);
+// has now stored a reference to all files ending in .mustache in /public
 ```
 
 This will find all templates ending in `.mustache` at any depth in `/Users/ben/projects/example/public` and `/Users/ben/projects/example/components`. Axilla will store files that are prefixed with an underscore as partials for use within other views. Inside of the mustache template, they can be referenced with the `partial` helper:
@@ -74,9 +69,6 @@ We can shorten this by invoking `axilla` with defaults.
 var render = axilla('users');
 var html = render('index', {users: []});
 ```
-
-This will render the users index page.
-
 
 ## API
 
