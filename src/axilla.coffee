@@ -20,7 +20,7 @@ axilla.configure = (path, options={}) ->
     throw new Error 'First argument must be an absolute path'
 
   unless fs.existsSync path
-    throw new Error '#{path} does not exist'
+    throw new Error "#{path} does not exist"
 
   (glob.sync (Path.normalize "#{path}/**/*.mustache")).forEach (file) ->
     relativePath = getTemplateReference file, path
