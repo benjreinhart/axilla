@@ -17,7 +17,7 @@ module.exports = axilla = (basePath, defaults) ->
 
 axilla.configure = (path, options={}) ->
   unless isAbsolutePath path
-    throw new Error 'First argument must be an absolute path'
+    throw new Error 'Path argument must be an absolute path'
 
   unless fs.existsSync path
     throw new Error "#{path} does not exist"
