@@ -41,6 +41,7 @@ axilla.render = render = (path, viewObject) ->
 axilla.clearCache = ->
   templates = {}
   partials = {}
+  undefined
 
 axilla.handlebars = -> Handlebars
 axilla.templates = -> {templates, partials}
