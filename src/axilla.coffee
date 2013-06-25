@@ -3,8 +3,10 @@ Path = require 'path'
 glob = require 'glob'
 Handlebars = require 'handlebars'
 
-templates = {}
-partials = {}
+$cache =
+  layouts: {}
+  partials: {}
+  templates: {}
 
 module.exports = axilla = (basePath, defaults) ->
   if (utils.isObject basePath) then defaults = basePath; basePath = null
@@ -26,33 +28,52 @@ axilla.configure = (path, options={}) ->
     relativePath = getTemplateReference file, path
 
     opts = utils.clone options
+    opts.cacheType = 'layouts' if opts.layout
+
     if isPartial (Path.basename file)
-      opts.isPartial = true
+      opts.cacheType = 'partials'
       relativePath = removeUnderscore relativePath
 
     cacheTemplate file, (utils.extend opts, as: relativePath)
 
-axilla.render = render = (path, viewObject) ->
-  unless (template = templates[path])?
+axilla.render = render = (path, viewObject, options={}) ->
+  unless (template = $cache['templates'][path])?
     throw new Error "Unable to resolve template at #{path}"
 
-  template.render viewObject
+  if options.layout is off
+    return template.render viewObject
+
+  layout = options.layout ? axilla._defaultLayout
+
+  unless (layout = $cache['layouts'][layout])?
+    throw new Error "Unable to resolve layout at #{layout}"
+
+  viewObject.yield = new Handlebars.SafeString (template.render viewObject)
+  layout.render viewObject
+
+axilla._defaultLayout = null
+axilla.setDefaultLayout = (layout) -> axilla._defaultLayout = layout
 
 axilla.clearCache = ->
-  templates = {}
-  partials = {}
+  $cache =
+    layouts: {}
+    partials: {}
+    templates: {}
   undefined
 
 axilla.handlebars = -> Handlebars
-axilla.templates = -> {templates, partials}
-
+axilla.templates = ->
+  cache = {}
+  for own key, value of $cache
+    cache[key] = utils.clone value
+  cache
 
 ###########
 # PRIVATE #
 ###########
 
 renderPartial = (path, viewObject) ->
-  unless (partial = partials[path])?
+  unless (partial = $cache.partials[path])?
     throw new Error "Unable to resolve partial at #{path}"
 
   partial.render viewObject
@@ -61,8 +82,7 @@ getTemplateReference = (file, dirname) ->
   removeBasePath dirname, (removeExtensions file)
 
 cacheTemplate = (path, options) ->
-  templateCache = if options.isPartial then partials else templates
-  templateCache[options.as] =
+  $cache[options.cacheType ? 'templates'][options.as] =
     render: do ->
       return (readAndCompileSync path) unless options.cache is off
       (viewObject) -> (readAndCompileSync path)(viewObject)
