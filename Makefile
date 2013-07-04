@@ -19,7 +19,7 @@ $(LIBDIR)/%.js: $(SRCDIR)/%.coffee
 	@mkdir -p "$(@D)"
 	$(COFFEE) <"$<" >"$@"
 
-test:
+test: build
 	$(MOCHA) --reporter spec --recursive --colors
 
 tag:
