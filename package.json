@@ -1,6 +1,6 @@
 {
     "name": "axilla"
-  , "version": "0.0.0-dev"
+  , "version": "0.0.10-dev"
   , "description": "Simple Node.js view templating with Handlebars."
   , "author": "benjreinhart"
   , "engines":
