@@ -28,7 +28,7 @@ axilla.configure = (path, options={}) ->
     relativePath = getTemplateReference file, path
 
     opts = utils.clone options
-    opts.cacheType = 'layouts' if opts.layout
+    opts.cacheType = 'layouts' if opts.layouts is true
 
     if isPartial (Path.basename file)
       opts.cacheType = 'partials'
