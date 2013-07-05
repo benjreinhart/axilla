@@ -1,0 +1,19 @@
+{
+    "name": "example-app",
+    "version": "0.0.0",
+    "description": "Example application for github.com/benjreinhart/axilla",
+    "keywords": [],
+    "author": "Ben Reinhart",
+    "dependencies": {
+        "axilla": "*",
+        "express": ">=3.3.3"
+    },
+    "devDependencies": {},
+    "main": "index",
+    "scripts": {
+        "start": "start.js"
+    },
+    "engines": {
+        "node": ">=0.8"
+    }
+}

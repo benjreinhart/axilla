@@ -1,0 +1,13 @@
+<li class="todo">
+  <input type="checkbox" {{#completed}}checked{{/completed}}>
+
+  {{#completed}}
+    <strike>{{description}}</strike>
+  {{/completed}}
+
+  {{^completed}}
+    {{description}}
+  {{/completed}}
+
+  <span class="delete">X</span>
+</li>
