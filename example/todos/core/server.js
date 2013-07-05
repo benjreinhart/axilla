@@ -41,7 +41,7 @@ require('./routes')(app)
 var shouldCacheTemplates = process.env.NODE_ENV === 'production'
 
 axilla.configure(APP_ROOT + '/components', {cache: shouldCacheTemplates})
-axilla.configure(APP_ROOT + '/core/layouts', {layout: true, cache: shouldCacheTemplates})
+axilla.configure(APP_ROOT + '/core/layouts', {layouts: true, cache: shouldCacheTemplates})
 
 // Set the default layout
 axilla.setDefaultLayout('application')
