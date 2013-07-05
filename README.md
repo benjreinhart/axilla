@@ -105,7 +105,7 @@ var html = render('index', {users: []});
 
 ## API
 
-### *axilla(pathOrOptions[, options])
+### *axilla(pathOrOptions[, options])*
 
 Invoking `axilla` and passing either a `path` or `options`, or both, will set those as defaults and return a function scoped with those defaults.
 
